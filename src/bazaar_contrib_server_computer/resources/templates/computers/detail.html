@@ -1,0 +1,45 @@
+{% import "computers/macros.html" as m %}
+{% set short = ref(row.computer.id) %}
+{% set host = row.host %}
+{# one computer, from its row: how it is now and what its machine holds; a change draws it again #}
+<div class="overlay" x-data @keydown.escape.window="$el.remove()">
+  <div class="backdrop" @click="$el.parentElement.remove()"></div>
+  <aside class="drawer wide" role="dialog" aria-labelledby="detail-title" data-topic="computers.computer" data-scope='{{ {"computer": short | string} | tojson }}' data-seen='{{ state | tojson }}' hx-get="/ui/computers/{{ short }}" hx-trigger="bazaar:change" hx-target="#drawer" hx-swap="innerHTML">
+    <div class="d-hd">
+      {# the name changes in place: Enter keeps it, Esc leaves it as it was #}
+      <div class="pc">{{ m.os(host) }}<div class="title" x-data="{ editing: {{ editing | tojson }} }" x-init="editing && $nextTick(() => $refs.name.select())">
+        <div class="named" x-show="!editing"><b id="detail-title">{{ row.computer.name }}</b>{% if row.update %}<button class="rename" type="button" @click="editing = true; $nextTick(() => $refs.name.select())" aria-label="{{ t.text('computers.rename') }}">{% include "computers/icons/pencil.svg" %}</button>{% endif %}</div>
+        {% if row.update %}<form x-show="editing" x-cloak hx-post="/ui/computers/{{ short }}/name" hx-target="#drawer" hx-swap="innerHTML" @keydown.escape.stop="editing = false"><input class="input" x-ref="name" name="name" value="{{ row.computer.name }}" maxlength="100" required autocomplete="off" aria-label="{{ t.text('computers.rename') }}"></form>{% endif %}
+        {% if invalid %}<small class="invalid" role="alert">{{ t.text("computers.rename.empty") }}</small>{% else %}<small>{% if host %}{{ host.name }} · {{ host.release }} · {{ host.machine }}{% else %}—{% endif %}</small>{% endif %}
+      </div></div>
+      <button class="icon-btn close" type="button" @click="$el.closest('.overlay').remove()" aria-label="{{ t.text('computers.close') }}">{% include "computers/icons/x.svg" %}</button>
+    </div>
+    <div class="d-bd">
+      <div class="facts">
+        <div><small>{{ t.text("computers.column.status") }}</small><span class="online{% if not row.online %} off{% endif %}">{{ t.text("computers.online" if row.online else "computers.offline") }}</span></div>
+        <div><small>{{ t.text("computers.uptime") if row.online else t.text("computers.column.seen") }}</small><b>{% if row.online and host %}{{ host.started_ms | uptime }}{% elif not row.online and row.seen_ms %}{{ row.seen_ms | ago }}{% else %}—{% endif %}</b></div>
+        <div><small>{{ t.text("computers.column.version") }}</small><b class="mono">{{ host.version if host else "—" }}</b></div>
+      </div>
+      {% if row.online and host %}
+      <div class="sec">
+        <h4>{{ t.text("computers.resources") }}<small>{{ t.text("computers.updated", {"ago": row.known_ms | ago}) }}</small></h4>
+        <div class="meter">{% include "computers/icons/cpu.svg" %}<span>CPU</span>{{ m.cells(host.cpu.percent | round | int, 32, wide=true) }}<b>{{ host.cpu.percent | round | int }}%</b><small>{% if host.cpu.cores %}{{ t.text("computers.cores", {"n": host.cpu.cores}) }}{% endif %}</small></div>
+        <div class="meter">{% include "computers/icons/memory-stick.svg" %}<span>{{ t.text("computers.memory") }}</span>{{ m.cells(host.memory.percent, 32, wide=true) }}<b>{{ host.memory.percent }}%</b><small>{{ host.memory.used | size(host.memory.total) }}</small></div>
+        {% for disk in host.disks %}
+        <div class="meter">{% include "computers/icons/hard-drive.svg" %}<span>{{ t.text("computers.disk") }}</span>{{ m.cells(disk.percent, 32, wide=true) }}<b>{{ disk.percent }}%</b><small>{{ m.mount(disk) }} · {{ disk.used | size(disk.total) }}</small></div>
+        {% endfor %}
+      </div>
+      {% elif row.online %}
+      <p class="note">{{ t.text("computers.asking") }}</p>
+      {% else %}
+      <p class="note">{{ t.text("computers.away") }}</p>
+      {% endif %}
+    </div>
+    {% if row.share or row.delete %}
+    <div class="d-ft">
+      {% if row.delete %}<button class="btn danger-o" type="button" hx-get="/ui/computers/{{ short }}/remove" hx-target="#drawer" hx-swap="innerHTML">{% include "computers/icons/trash-2.svg" %}{{ t.text("computers.remove") }}</button>{% endif %}
+      {% if row.share %}<button class="btn" type="button" style="margin-left:auto" hx-get="/ui/computers/{{ short }}/share" hx-target="#drawer" hx-swap="innerHTML">{% include "computers/icons/share-2.svg" %}{{ t.text("computers.share.action") }}</button>{% endif %}
+    </div>
+    {% endif %}
+  </aside>
+</div>

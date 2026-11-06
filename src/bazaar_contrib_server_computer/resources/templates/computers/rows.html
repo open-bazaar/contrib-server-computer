@@ -1,0 +1,37 @@
+{% import "computers/macros.html" as m %}
+{% for row in rows %}
+{% set short = ref(row.computer.id) %}
+{% set host = row.host if row.online else none %}
+{# a click anywhere on the row opens it, but in its menu #}
+<div class="tr row{% if not row.online %} away{% endif %}" hx-get="/ui/computers/{{ short }}" hx-trigger="click[!target.closest('.acts')]" hx-target="#drawer" hx-swap="innerHTML">
+  <div class="pc">{{ m.os(row.host) }}<div>
+    <b>{{ row.computer.name }}</b>
+    <small class="os-line">{% if row.host %}{{ row.host.name }} · {{ row.host.machine }}{% else %}—{% endif %}</small>
+    <span class="phone-line"><span class="online{% if not row.online %} off{% endif %}"></span>{{ t.text("computers.online" if row.online else "computers.offline") }} · {% if row.online %}{{ t.text("computers.now") }}{% elif row.seen_ms %}{{ row.seen_ms | ago }}{% else %}{{ t.text("computers.unseen") }}{% endif %}</span>
+    {% if host %}<span class="phone-use"><span>{{ t.text("computers.memory") }}{{ m.cells(host.memory.percent, 8) }}<b>{{ host.memory.percent }}%</b></span>{% if host.fullest %}<span>{{ t.text("computers.disk") }}{{ m.cells(host.fullest.percent, 8) }}<b>{{ host.fullest.percent }}%</b></span>{% endif %}</span>{% endif %}
+  </div></div>
+  <div class="status-cell"><span class="online{% if not row.online %} off{% endif %}">{{ t.text("computers.online" if row.online else "computers.offline") }}</span></div>
+  {% if host %}
+  <div class="use">{{ m.cells(host.memory.percent) }}<b>{{ host.memory.percent }}%</b><small>{{ host.memory.used | size(host.memory.total) }}</small></div>
+  {% if host.fullest %}<div class="use">{{ m.cells(host.fullest.percent) }}<b>{{ host.fullest.percent }}%</b><small>{{ host.fullest.used | size(host.fullest.total) }}</small></div>{% else %}<div class="use none">—</div>{% endif %}
+  {% else %}
+  <div class="use none">—</div><div class="use none">—</div>
+  {% endif %}
+  <span class="cell mono version">{{ row.host.version if row.host else "—" }}</span>
+  <span class="cell seen-cell">{% if row.online %}{{ t.text("computers.now") }}{% elif row.seen_ms %}{{ row.seen_ms | ago }}{% else %}—{% endif %}</span>
+  <div class="acts">
+    {% if row.update or row.share or row.delete %}
+    <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false">
+      <button class="more" type="button" :aria-expanded="open" @click="open = !open" aria-label="{{ t.text('computers.actions') }}">{% include "computers/icons/ellipsis.svg" %}</button>
+      <div class="pop" x-show="open" x-cloak>
+        {% if row.update %}<button type="button" hx-get="/ui/computers/{{ short }}?edit" hx-target="#drawer" hx-swap="innerHTML" @click="open = false">{% include "computers/icons/pencil.svg" %}{{ t.text("computers.rename") }}</button>{% endif %}
+        {% if row.share %}<button type="button" hx-get="/ui/computers/{{ short }}/share" hx-target="#drawer" hx-swap="innerHTML" @click="open = false">{% include "computers/icons/share-2.svg" %}{{ t.text("computers.share.action") }}</button>{% endif %}
+        {% if (row.update or row.share) and row.delete %}<hr>{% endif %}
+        {% if row.delete %}<button type="button" class="danger" hx-get="/ui/computers/{{ short }}/remove" hx-target="#drawer" hx-swap="innerHTML" @click="open = false">{% include "computers/icons/trash-2.svg" %}{{ t.text("computers.remove") }}</button>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+{% if more and rows %}<div class="more-rows" hx-get="/ui/computers/more?after={{ ref(rows[-1].computer.id) }}" hx-trigger="revealed" hx-swap="outerHTML"></div>{% endif %}

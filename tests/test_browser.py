@@ -1,0 +1,109 @@
+"""The computers' pages in a real browser, signed in as the admin, with a
+computer whose node this test answers for."""
+
+from __future__ import annotations
+
+lazy import re
+lazy from http.cookiejar import CookieJar
+
+from playwright.async_api import Page, async_playwright, expect
+from served import Served, admin, client, enrol, node, serving
+from test_starlink import connected
+
+
+async def signed_in(page: Page, served: Served, cookies: CookieJar) -> Page:
+    """The page on the computers, with the admin's session."""
+    await page.context.add_cookies(
+        [
+            {"name": cookie.name, "value": cookie.value or "", "url": served.url}
+            for cookie in cookies
+        ]
+    )
+    await page.goto(f"{served.url}/computers")
+    await page.wait_for_url(re.compile(r"/computers$"))
+    return page
+
+
+async def test_connecting_a_computer_shows_the_commands_and_then_the_computer():
+    async with serving() as served, client() as boss, async_playwright() as driver:
+        await admin(served, boss)
+        browser = await driver.chromium.launch()
+        try:
+            context = await browser.new_context(locale="zh-CN")
+            page = await signed_in(await context.new_page(), served, boss.cookies.jar)
+            frame = page.frame_locator("iframe.frame")
+            await frame.locator(".top .actions button").click()
+            await frame.locator("input[name=name]").fill("kana-vm")
+            await frame.locator(".dstep form button[type=submit]").click()
+            commands = frame.locator(".code:visible")
+            # the address the page is seen at, and the token's middle hidden
+            await expect(commands).to_contain_text(f"server={served.url}")
+            await expect(commands).to_contain_text("••••••••")
+            # what the button copies holds the whole token
+            copied = await commands.get_attribute("data-text")
+            token = re.search(r"--option token=(\S+)", copied or "")
+            assert token is not None
+            assert "--option server=ORIGIN" in (copied or "")
+            await commands.locator(".copy").click()
+            # the computer coming online takes the drawer to its detail
+            async with node(served, token.group(1)) as computer:
+                await connected(computer)
+                await expect(frame.locator(".drawer .facts")).to_contain_text("在线")
+                await expect(frame.locator(".drawer .d-hd")).to_contain_text(
+                    "Fedora Linux 44"
+                )
+            await frame.locator(".overlay .close").click()
+            await expect(frame.locator(".tr.row")).to_contain_text("kana-vm")
+        finally:
+            await browser.close()
+
+
+async def test_a_computer_is_shared_and_removed_from_its_row():
+    async with serving() as served, client() as boss, async_playwright() as driver:
+        await admin(served, boss)
+        await boss.post(
+            f"{served.url}/ui/access/roles/",
+            data={"name": "ops", "permissions": ["computers.view"]},
+        )
+        await enrol(served, boss, "north")
+        browser = await driver.chromium.launch()
+        try:
+            context = await browser.new_context(locale="en-US")
+            page = await signed_in(await context.new_page(), served, boss.cookies.jar)
+            frame = page.frame_locator("iframe.frame")
+            row = frame.locator(".tr.row", has_text="north")
+            # the menu works once Alpine has taken the page
+            await expect(row.locator(".pop")).not_to_have_attribute(
+                "x-cloak", re.compile(".*")
+            )
+            # renamed in place from its detail, the list follows
+            await row.locator(".pc b").click()
+            await frame.locator(".drawer .rename").click()
+            await frame.locator(".drawer input[name=name]").fill("west")
+            await frame.locator(".drawer input[name=name]").press("Enter")
+            await expect(frame.locator("#detail-title")).to_have_text("west")
+            await frame.locator(".overlay .close").click()
+            row = frame.locator(".tr.row", has_text="west")
+            await expect(row).to_have_count(1)
+            await expect(row.locator(".pop")).not_to_have_attribute(
+                "x-cloak", re.compile(".*")
+            )
+            await row.locator(".acts .more").click()
+            await row.locator(".pop button", has_text="Share").click()
+            shares = frame.frame_locator("iframe.shares")
+            await shares.locator("input[name=grant]").first.check()
+            await shares.locator("footer button[type=submit]").click()
+            # saved, the sheet goes away
+            await expect(frame.locator(".overlay")).to_have_count(0)
+            await row.locator(".acts .more").click()
+            await row.locator(".pop button.danger").click()
+            await frame.locator(".confirm button[type=submit]").click()
+            await expect(frame.locator(".tr.row")).to_have_count(0)
+            await expect(frame.locator(".overlay")).to_have_count(0)
+            # on a phone, a card a computer
+            await enrol(served, boss, "south")
+            await page.set_viewport_size({"width": 390, "height": 844})
+            await page.reload()
+            await expect(frame.locator(".phone-line")).to_contain_text("Offline")
+        finally:
+            await browser.close()

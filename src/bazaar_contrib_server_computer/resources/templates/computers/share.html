@@ -1,0 +1,8 @@
+{# sharing one computer: server-access's page in a frame, which says when it is done #}
+<div class="overlay" x-data @keydown.escape.window="$el.remove()">
+  <div class="backdrop" @click="$el.parentElement.remove()"></div>
+  <aside class="drawer sheet" role="dialog" aria-labelledby="share-title">
+    <div class="d-hd"><h3 id="share-title">{{ t.text("computers.share.title", {"name": row.computer.name}) }}</h3><button class="icon-btn close" type="button" @click="$el.closest('.overlay').remove()" aria-label="{{ t.text('computers.close') }}">{% include "computers/icons/x.svg" %}</button></div>
+    <iframe class="shares" src="/ui/access/shares/computer/{{ ref(row.computer.id) }}" title="{{ t.text('computers.share.title', {'name': row.computer.name}) }}" @bazaar:done="$el.closest('.overlay').remove()"></iframe>
+  </aside>
+</div>

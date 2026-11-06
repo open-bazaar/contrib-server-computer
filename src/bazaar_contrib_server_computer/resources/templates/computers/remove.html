@@ -1,0 +1,13 @@
+{# the question before a computer is removed #}
+<div class="overlay" x-data @keydown.escape.window="$el.remove()" @computers:removed.window="$el.remove()">
+  <div class="backdrop" @click="$el.parentElement.remove()"></div>
+  <div class="confirm" role="alertdialog" aria-labelledby="remove-title">
+    <span class="ic">{% include "computers/icons/trash-2.svg" %}</span>
+    <h3 id="remove-title">{{ t.text("computers.remove.title", {"name": row.computer.name}) }}</h3>
+    <p>{{ t.text("computers.remove.hint") }}</p>
+    <form hx-post="/ui/computers/{{ ref(row.computer.id) }}/remove" hx-swap="none">
+      <button class="btn" type="button" @click="$el.closest('.overlay').remove()">{{ t.text("computers.cancel") }}</button>
+      <button class="btn red" type="submit">{% include "computers/icons/trash-2.svg" %}{{ t.text("computers.remove") }}</button>
+    </form>
+  </div>
+</div>
