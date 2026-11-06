@@ -1,0 +1,54 @@
+{# connecting a computer: its name, the commands to run on it, and waiting for it to come online #}
+<div class="overlay" x-data @keydown.escape.window="$el.remove()">
+  <div class="backdrop" @click="$el.parentElement.remove()"></div>
+  <aside class="drawer" role="dialog" aria-labelledby="enrol-title">
+    <div class="d-hd"><h3 id="enrol-title">{{ t.text("computers.enrol.title") }}</h3><button class="icon-btn close" type="button" @click="$el.closest('.overlay').remove()" aria-label="{{ t.text('computers.close') }}">{% include "computers/icons/x.svg" %}</button></div>
+    <div class="d-bd">
+      {% if enrolled %}
+      <div class="dstep">
+        <span class="n">{% include "computers/icons/check.svg" %}</span>
+        <div><h4>{{ t.text("computers.enrol.name") }}</h4><div class="input">{{ enrolled.name }}</div></div>
+      </div>
+      {# the token is in the page this once: the lines shown hide its middle, what is copied is all of it, with the address this page is seen at #}
+      {% set masked = token[:8] ~ "••••••••" ~ token[-4:] %}
+      <div class="dstep now" x-data="{ windows: navigator.platform.startsWith('Win'), copied: false }">
+        <span class="n">2</span>
+        <div>
+          <h4>{{ t.text("computers.enrol.run", {"name": enrolled.name}) }}</h4>
+          <div class="seg"><button type="button" :class="{ on: !windows }" @click="windows = false">Linux / macOS</button><button type="button" :class="{ on: windows }" @click="windows = true">Windows</button></div>
+          {% for kind, tail in (("unix", "\\"), ("windows", "`")) %}
+          <div class="code" x-show="{{ 'windows' if kind == 'windows' else '!windows' }}"{% if kind == "windows" %} x-cloak{% endif %} data-text="uv tool install &quot;bazaar-compute[node]&quot;&#10;bcn contrib add bazaar-contrib-starlink {{ tail }}&#10;    --enable starlink {{ tail }}&#10;    --option server=ORIGIN {{ tail }}&#10;    --option token={{ token }}"><span class="p">$ </span>uv tool install <span class="s">"bazaar-compute[node]"</span>
+<span class="p">$ </span>bcn contrib add bazaar-contrib-starlink {{ tail }}
+    <span class="f">--enable</span> starlink {{ tail }}
+    <span class="f">--option</span> server=<span x-text="location.origin"></span> {{ tail }}
+    <span class="f">--option</span> token={{ masked }}<button class="btn sm copy" type="button" @click="navigator.clipboard?.writeText($el.parentElement.dataset.text.replace('ORIGIN', location.origin)); copied = true">{% include "computers/icons/copy.svg" %}<span x-show="!copied">{{ t.text("computers.copy") }}</span><span x-show="copied" x-cloak>{{ t.text("computers.copied") }}</span></button></div>
+          {% endfor %}
+          <div class="warn">{% include "computers/icons/key-round.svg" %}{{ t.text("computers.enrol.once") }}</div>
+        </div>
+      </div>
+      {# once it is here its detail takes the drawer #}
+      <div class="dstep wait" data-topic="computers.computer" data-scope='{{ {"computer": ref(enrolled.id) | string} | tojson }}' data-seen='{{ state | tojson }}' hx-get="/ui/computers/{{ ref(enrolled.id) }}" hx-trigger="bazaar:change[detail.state && detail.state.online]" hx-target="#drawer" hx-swap="innerHTML">
+        <span class="n">3</span>
+        <div>
+          <h4>{{ t.text("computers.enrol.wait") }}</h4>
+          <div class="waiting"><div class="ring"><span class="lantern work lg"></span></div><div><b>{{ t.text("computers.enrol.waiting", {"name": enrolled.name}) }}</b><span>{{ t.text("computers.enrol.then") }}</span></div></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="dstep now">
+        <span class="n">1</span>
+        <div>
+          <h4>{{ t.text("computers.enrol.name") }}</h4>
+          <form hx-post="/ui/computers/" hx-target="#drawer" hx-swap="innerHTML">
+            <input class="input" name="name" maxlength="100" required autofocus autocomplete="off" placeholder="{{ t.text('computers.enrol.placeholder') }}" aria-label="{{ t.text('computers.enrol.name') }}">
+            <button class="btn primary" type="submit">{{ t.text("computers.enrol.next") }}</button>
+          </form>
+        </div>
+      </div>
+      <div class="dstep wait"><span class="n">2</span><div><h4>{{ t.text("computers.enrol.run_later") }}</h4></div></div>
+      <div class="dstep wait"><span class="n">3</span><div><h4>{{ t.text("computers.enrol.wait") }}</h4></div></div>
+      {% endif %}
+    </div>
+    <div class="d-ft">{% include "computers/icons/terminal.svg" %}<span class="muted">{{ t.text("computers.enrol.service") }}</span><button class="btn" type="button" style="margin-left:auto" @click="$el.closest('.overlay').remove()">{{ t.text("computers.close") }}</button></div>
+  </aside>
+</div>

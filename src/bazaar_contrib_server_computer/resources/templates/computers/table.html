@@ -1,0 +1,14 @@
+{# the list; a change to what it shows draws it again, as far as it was scrolled #}
+<div id="table" class="card tbl">
+  {% if refresh %}<span id="count" class="count" hx-swap-oob="true">{{ t.text("computers.counted", {"total": total, "online": online}) }}</span>{% endif %}
+  <span hidden data-topic="computers.list" data-seen='{{ state | tojson }}' hx-get="/ui/computers/table{% if rows %}?until={{ ref(rows[-1].computer.id) }}{% endif %}" hx-trigger="bazaar:change, computers:removed from:body" hx-target="#table" hx-swap="outerHTML"></span>
+  {% if rows %}
+  <div class="tr h"><span>{{ t.text("computers.column.computer") }}</span><span>{{ t.text("computers.column.status") }}</span><span>{{ t.text("computers.memory") }}</span><span>{{ t.text("computers.disk") }}</span><span>{{ t.text("computers.column.version") }}</span><span>{{ t.text("computers.column.seen") }}</span><span></span></div>
+  {% include "computers/rows.html" %}
+  {% else %}
+  <div class="empty-list">
+    <span>{{ t.text("computers.none") }}</span>
+    {% if create %}<button class="btn primary" type="button" hx-get="/ui/computers/enrol" hx-target="#drawer" hx-swap="innerHTML">{% include "computers/icons/plus.svg" %}{{ t.text("computers.enrol") }}</button>{% endif %}
+  </div>
+  {% endif %}
+</div>

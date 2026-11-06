@@ -1,0 +1,12 @@
+{% extends "server/base.html" %}
+{% block title %}{{ t.text("computers.title") }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ asset('computers.css') }}">{% endblock %}
+{% block crumbs %}<span id="count" class="count">{{ t.text("computers.counted", {"total": total, "online": online}) }}</span>{% endblock %}
+{% block actions %}{% if create %}<button class="btn primary" type="button" hx-get="/ui/computers/enrol" hx-target="#drawer" hx-swap="innerHTML">{% include "computers/icons/plus.svg" %}{{ t.text("computers.enrol") }}</button>{% endif %}{% endblock %}
+{% block body %}
+<section class="content">
+  {% include "computers/table.html" %}
+</section>
+{# what opens over the list: a drawer, a sheet or the question before removing #}
+<div id="drawer"></div>
+{% endblock %}
