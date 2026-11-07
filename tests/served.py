@@ -28,7 +28,13 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
 
-from bazaar_contrib_server_computer import COMPUTERS, REPORTED, Reported
+from bazaar_contrib_server_computer import (
+    COMPUTER_REMOVED,
+    COMPUTERS,
+    REPORTED,
+    ComputerRemoved,
+    Reported,
+)
 
 ENTRIES = (
     ("timer-wheel", {}),
@@ -53,12 +59,15 @@ class Served:
     door: Door
     # what the computers reported, as it was announced
     reported: list[Reported] = field(default_factory=list)
+    # the computers removed, as it was announced
+    removed: list[ComputerRemoved] = field(default_factory=list)
 
 
 @asynccontextmanager
 async def serving() -> AsyncIterator[Served]:
     found: dict[str, Any] = {}
     reported: list[Reported] = []
+    removed: list[ComputerRemoved] = []
     printed: list[str] = []
 
     class Printed(logging.Handler):
@@ -115,15 +124,33 @@ async def serving() -> AsyncIterator[Served]:
                 return JSONResponse({"failed": error.type}, status_code=502)
             return JSONResponse({"value": value})
 
+        async def listing(request: Request) -> Response:
+            ids = request.query_params.getlist("id")
+            return JSONResponse(
+                [
+                    {"id": item.id, "name": item.name, "online": item.online}
+                    for item in await computers.computers(ids or None)
+                ]
+            )
+
         async with server.module(
             "probe",
-            ui=Starlette(routes=[Route("/{ref}/{method}", ask, methods=["POST"])]),
+            ui=Starlette(
+                routes=[
+                    Route("/computers", listing),
+                    Route("/{ref}/{method}", ask, methods=["POST"]),
+                ]
+            ),
         ):
             yield
 
     async def heard(ctx: Context, value: Reported) -> None:
         del ctx
         reported.append(value)
+
+    async def gone(ctx: Context, value: ComputerRemoved) -> None:
+        del ctx
+        removed.append(value)
 
     composition = await asyncio.to_thread(
         load,
@@ -144,7 +171,7 @@ async def serving() -> AsyncIterator[Served]:
                     definition=Contrib(
                         accepts=[SERVER, COMPUTERS],
                         lifespan=probe,
-                        listen={REPORTED: heard},
+                        listen={REPORTED: heard, COMPUTER_REMOVED: gone},
                     ),
                 ),
                 ContribEntry(
@@ -166,7 +193,7 @@ async def serving() -> AsyncIterator[Served]:
                 ),
                 "",
             )
-            yield Served(hub, found["url"], password, found["door"], reported)
+            yield Served(hub, found["url"], password, found["door"], reported, removed)
     finally:
         logger.removeHandler(handler)
 

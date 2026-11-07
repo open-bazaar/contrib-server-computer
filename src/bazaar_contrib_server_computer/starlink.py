@@ -28,6 +28,12 @@ lazy from .store import Computer, Store
 # a computer is online while it was here within this long: a listen is held
 # 25 seconds, and one that failed is tried again within the minute
 ONLINE_MS = 60_000
+
+
+def is_online(seen_ms: int | None, now_ms: int) -> bool:
+    return seen_ms is not None and now_ms - seen_ms <= ONLINE_MS
+
+
 # what one request may carry, as the server's own addresses take
 MAX_BODY_BYTES = 1024 * 1024
 

@@ -22,12 +22,15 @@ from bazaar_core import Context, Contrib
 from .contracts import (
     ANSWER_MS,
     CALLS_AT_MOST,
+    COMPUTER_REMOVED,
     COMPUTERS,
     HOLD_MS,
     RELAY,
     REPORTED,
     Call,
+    ComputerRemoved,
     Computers,
+    ComputerSummary,
     Relay,
     Reported,
 )
@@ -43,10 +46,13 @@ __all__ = [
     "ANSWER_MS",
     "CALLS_AT_MOST",
     "COMPUTERS",
+    "COMPUTER_REMOVED",
     "HOLD_MS",
     "RELAY",
     "REPORTED",
     "Call",
+    "ComputerRemoved",
+    "ComputerSummary",
     "Computers",
     "Relay",
     "Reported",
@@ -70,14 +76,24 @@ async def _computer(ctx: Context) -> AsyncIterator[None]:
         ctx.accept(SERVER_SCHEMA).register(MODULE),
         asyncio.TaskGroup() as tasks,
     ):
-        calls = Calls(relay)
-        hosts = Hosts(calls, tasks)
         store = Store(ctx.accept(SERVER_DB), access)
+        calls = Calls(relay, store)
+        hosts = Hosts(calls, tasks)
         starlink = Starlink(
             store, relay, hosts, lambda reported: ctx.announce(REPORTED, reported)
         )
         pages = await server.pages("computers", __name__)
-        views = Views(server, pages, access, store, relay, hosts)
+        views = Views(
+            server,
+            pages,
+            access,
+            store,
+            relay,
+            hosts,
+            lambda computer_id: ctx.announce(
+                COMPUTER_REMOVED, ComputerRemoved(computer_id)
+            ),
+        )
         async with (
             server.module(
                 "computers",

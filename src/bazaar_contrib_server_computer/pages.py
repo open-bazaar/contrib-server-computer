@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 lazy import hashlib
 lazy import json
-lazy from collections.abc import Mapping, Sequence
+lazy from collections.abc import Awaitable, Callable, Mapping, Sequence
 lazy from time import time_ns
 
 lazy from bazaar_contrib_server import Account, Pages, Server
@@ -21,7 +21,7 @@ lazy from starlette.routing import Route
 
 lazy from .contracts import Relay
 lazy from .hosts import Host, Hosts
-lazy from .starlink import ONLINE_MS
+lazy from .starlink import is_online
 lazy from .store import NAME_CHARS, Computer, Store
 
 VIEW = "computers.view"
@@ -47,10 +47,6 @@ class Row:
     update: bool
     delete: bool
     share: bool
-
-
-def _online(seen_ms: int | None, now_ms: int) -> bool:
-    return seen_ms is not None and now_ms - seen_ms <= ONLINE_MS
 
 
 def _number(value: float) -> str:
@@ -107,6 +103,7 @@ class Views:
         store: Store,
         relay: Relay,
         hosts: Hosts,
+        removed: Callable[[str], Awaitable[None]],
     ) -> None:
         self._server = server
         self._pages = pages
@@ -114,6 +111,7 @@ class Views:
         self._store = store
         self._relay = relay
         self._hosts = hosts
+        self._removed = removed
         pages.environment.filters |= {
             "size": size,
             "uptime": uptime,
@@ -152,7 +150,7 @@ class Views:
         now = time_ns() // 1_000_000
         rows = []
         for computer in computers:
-            online = _online(seen.get(computer.id), now)
+            online = is_online(seen.get(computer.id), now)
             known = self._hosts.of(computer.id, online)
             rows.append(
                 Row(
@@ -212,7 +210,7 @@ class Views:
             rows=await self._shown(account, computers),
             more=more,
             total=len(ids),
-            online=sum(1 for at in seen.values() if _online(at, now)),
+            online=sum(1 for at in seen.values() if is_online(at, now)),
             state=await self.listed(account, {}),
             create=account.allows(CREATE),
             # a refresh brings the count in the top bar along
@@ -311,6 +309,7 @@ class Views:
         if not await self._store.remove(row.computer.id):
             raise HTTPException(status_code=404)
         self._hosts.forget(row.computer.id)
+        await self._removed(row.computer.id)
         # the page showing it lists again
         return Response(status_code=204, headers={"HX-Trigger": "computers:removed"})
 
@@ -328,7 +327,7 @@ class Views:
             more=more,
             total=len(ids),
             away=sum(
-                1 for computer_id in ids if not _online(seen.get(computer_id), now)
+                1 for computer_id in ids if not is_online(seen.get(computer_id), now)
             ),
             state=await self.listed(request.state.account, {}),
         )
@@ -358,7 +357,7 @@ class Views:
         now = time_ns() // 1_000_000
         shown = []
         for computer_id in ids:
-            online = _online(seen.get(computer_id), now)
+            online = is_online(seen.get(computer_id), now)
             known = self._hosts.of(computer_id, online)
             shown.append(
                 [
@@ -388,6 +387,6 @@ class Views:
         if await self._store.get(found[0]) is None:
             return None
         seen = (await self._relay.last_seen(found)).get(found[0])
-        online = _online(seen, time_ns() // 1_000_000)
+        online = is_online(seen, time_ns() // 1_000_000)
         known = self._hosts.of(found[0], online)
         return {"online": online, "known": None if known is None else known[0]}
