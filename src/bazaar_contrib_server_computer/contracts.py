@@ -66,6 +66,17 @@ class Relay(Protocol):
 RELAY = ServiceKey[Relay]("server.relay")
 
 
+@dataclass(frozen=True, slots=True)
+class ComputerSummary:
+    """A computer as other modules show it: its name, whether it is here,
+    and when it last was, nothing when not since the relay started."""
+
+    id: str
+    name: str
+    online: bool
+    seen_ms: int | None
+
+
 class Computers(Protocol):
     """What other modules do with the computers."""
 
@@ -82,6 +93,10 @@ class Computers(Protocol):
         not answer in time."""
         ...
 
+    async def computers(self, ids: Sequence[str] | None) -> Sequence[ComputerSummary]:
+        """The computers given that are there, every one for None."""
+        ...
+
 
 COMPUTERS = ServiceKey[Computers]("server.computers")
 
@@ -96,3 +111,13 @@ class Reported:
 
 
 REPORTED = EventKey[Reported]("server.computer.reported")
+
+
+@dataclass(frozen=True, slots=True)
+class ComputerRemoved:
+    """A computer deleted, with who owned it and whom it was shared with."""
+
+    computer_id: str
+
+
+COMPUTER_REMOVED = EventKey[ComputerRemoved]("server.computer.removed")

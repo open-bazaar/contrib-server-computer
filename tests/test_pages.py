@@ -94,10 +94,19 @@ async def test_a_computer_shows_to_its_owner_and_to_the_roles_it_is_shared_with(
         detail = await bob.get(f"{served.url}/ui/computers/{north}")
         assert f"/ui/computers/{north}/share" not in detail.text
         assert f"/ui/computers/{north}/remove" not in detail.text
+        # other modules list it by id, with its name and whether it is here
+        north_id = token.partition(":")[0]
+        listed = (
+            await alice.get(f"{served.url}/ui/probe/computers?id={north_id}")
+        ).json()
+        assert listed == [{"id": north_id, "name": "north", "online": False}]
         # removed, it is gone for everyone and its token speaks for nothing
         removed = await alice.post(f"{served.url}/ui/computers/{north}/remove")
         assert removed.status_code == 204
         assert "north" not in (await bob.get(f"{served.url}/ui/computers/")).text
+        assert any(event.computer_id == north_id for event in served.removed)
+        everyone = (await alice.get(f"{served.url}/ui/probe/computers")).json()
+        assert all(item["id"] != north_id for item in everyone)
         async with node(served, token) as computer:
             assert (await computer.get("/listen")).status_code == 401
 
