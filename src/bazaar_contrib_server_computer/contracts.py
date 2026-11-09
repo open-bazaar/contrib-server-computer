@@ -6,6 +6,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 lazy from collections.abc import Sequence
+lazy from contextlib import AbstractAsyncContextManager
 
 from bazaar_core import EventKey, ServiceKey
 lazy from bazaar_contrib_audit import AuditEvent
@@ -52,9 +53,10 @@ class Relay(Protocol):
         """The computer's answer to its call; one given again counts once."""
         ...
 
-    async def seen(self, computer_id: str) -> int | None:
-        """Note that the computer is here now; when it was here before,
-        nothing when not since the relay started."""
+    async def seen(self, computer_id: str) -> tuple[int | None, int]:
+        """Note that the computer is here now: when it was here before,
+        nothing when not since the relay started, and when it is now, as
+        the relay noted it."""
         ...
 
     async def last_seen(self, computer_ids: Sequence[str]) -> dict[str, int]:
@@ -97,6 +99,11 @@ class Computers(Protocol):
         """The computers given that are there, every one for None."""
         ...
 
+    def stall(self, src: str) -> AbstractAsyncContextManager[None]:
+        """Show what is at <src>/<the computer's ref> in each computer's stall
+        on the overview, under its name, while open; one at a time."""
+        ...
+
 
 COMPUTERS = ServiceKey[Computers]("server.computers")
 
@@ -121,3 +128,15 @@ class ComputerRemoved:
 
 
 COMPUTER_REMOVED = EventKey[ComputerRemoved]("server.computer.removed")
+
+
+@dataclass(frozen=True, slots=True)
+class ComputerLeft:
+    """A computer not seen for as long as one counts as online, and when it
+    was last; each replica that saw it last may say so."""
+
+    computer_id: str
+    seen_ms: int
+
+
+COMPUTER_LEFT = EventKey[ComputerLeft]("server.computer.left")

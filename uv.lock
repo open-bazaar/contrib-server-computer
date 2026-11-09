@@ -171,7 +171,7 @@ requires-dist = [
     { name = "bazaar-contrib-server-access", specifier = "~=0.3.0rc4" },
     { name = "bazaar-contrib-server-database", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-server-migrations", specifier = "~=0.3.0rc2" },
-    { name = "bazaar-contrib-server-overview", specifier = "~=0.3.0rc2" },
+    { name = "bazaar-contrib-server-overview", specifier = "~=0.3.0rc3" },
     { name = "bazaar-contrib-sidecar", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-storage", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-timer", specifier = "~=0.3.0rc1" },
@@ -227,7 +227,7 @@ wheels = [
 
 [[package]]
 name = "bazaar-contrib-server-overview"
-version = "0.3.0rc2"
+version = "0.3.0rc3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bazaar-contrib-schema" },
@@ -240,9 +240,9 @@ dependencies = [
     { name = "python-multipart" },
     { name = "starlette" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/d8/f741b60814a9aeba8655f0e424c05b039bed12dd6c75ecb21bb8c6616e65/bazaar_contrib_server_overview-0.3.0rc2.tar.gz", hash = "sha256:73c902eef9fd2650a655dff0479ba9047bbd1475bf53beaaa5469f53472f210c", size = 11168, upload-time = "2026-11-06T15:02:11.817Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/9a/b106e6c43359f5c168c87fccface39b4d0ccf72d3e62a58a573e0c15e9ae/bazaar_contrib_server_overview-0.3.0rc3.tar.gz", hash = "sha256:b516948319da247d62c7ebe7c45b5bbcd78acdd840831dc8c71adf724cae50f1", size = 11339, upload-time = "2026-11-09T11:02:00.635Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/be/41141891fb155fac79d4434033ff9fb75c0283f3fd72a1f856c3d756d216/bazaar_contrib_server_overview-0.3.0rc2-py3-none-any.whl", hash = "sha256:d1a027a8f73805aa7d05e8f0ae1dc07244206225f7f1a97a24e8e58845013a8d", size = 15175, upload-time = "2026-11-06T15:02:10.864Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/4e/bf94c5145212e9b3e486d88e9dc2ee6b4bbf055501792f3848f4cefcb9a4/bazaar_contrib_server_overview-0.3.0rc3-py3-none-any.whl", hash = "sha256:7fa6f8d96c94c14856fabf7cccf14b58703ba7ce3826673122ed4586e0a8c2a6", size = 15369, upload-time = "2026-11-09T11:01:59.702Z" },
 ]
 
 [[package]]

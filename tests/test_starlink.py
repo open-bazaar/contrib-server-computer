@@ -9,8 +9,10 @@ lazy from time import monotonic, time_ns
 lazy from typing import Any
 lazy from uuid import uuid7
 
-from served import admin, client, enrol, node, serving
+from served import Served, admin, client, enrol, node, serving
 lazy import httpx
+
+lazy from bazaar_contrib_server_computer import ComputerLeft
 
 GIB = 1024**3
 INFO = {
@@ -191,3 +193,41 @@ async def test_reported_events_are_announced_once_and_confirmed():
             too_large = await computer.post("/report", content=b"x" * (1024 * 1024 + 1))
             assert too_large.status_code == 413
             assert len(served.reported) == 4
+
+
+async def departed(served: Served, computer_id: str) -> ComputerLeft:
+    """The computer said to have left, once it is."""
+    async with asyncio.timeout(90):
+        while True:
+            for left in served.left:
+                if left.computer_id == computer_id:
+                    return left
+            await asyncio.sleep(0.5)
+
+
+async def test_a_computer_that_stays_away_a_minute_is_said_to_have_left_once():
+    async with serving() as served, client() as boss:
+        await admin(served, boss)
+        _, away_token = await enrol(served, boss, "away")
+        _, back_token = await enrol(served, boss, "back")
+        run = str(uuid7())
+        async with node(served, away_token) as away, node(served, back_token) as back:
+            started = monotonic()
+            for computer in (away, back):
+                shown = await computer.post(
+                    "/report", json={"run_id": run, "events": []}
+                )
+                assert shown.status_code == 200
+            # one shows up again half a minute on; the other stays away
+            await asyncio.sleep(30)
+            returned = monotonic()
+            assert (
+                await back.post("/report", json={"run_id": run, "events": []})
+            ).status_code == 200
+            gone = await departed(served, away_token.partition(":")[0])
+            assert monotonic() - started >= 60
+            # the one that came back left a minute after it last showed up
+            later = await departed(served, back_token.partition(":")[0])
+            assert monotonic() - returned >= 60
+            assert later.seen_ms > gone.seen_ms
+            assert served.left.count(gone) == 1
