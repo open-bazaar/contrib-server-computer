@@ -1,6 +1,6 @@
 {% extends "server/base.html" %}
 {% import "computers/macros.html" as m %}
-{# the overview's stalls: a section of its own, a card a computer under its awning, with what another module shows in it under its name #}
+{# the overview's stalls: a section of its own, a card a computer under its awning, with what another module shows in it under its name; a computer alone has an empty stall beside it, inviting another #}
 {% block root %} class="stalls-page"{% endblock %}
 {% block top %}{% endblock %}
 {% block title %}{{ t.text("computers.stalls") }}{% endblock %}
@@ -19,6 +19,11 @@
       {% if goods %}<iframe class="goods" src="{{ goods }}/{{ ref(row.computer.id) }}" data-fit title="{{ row.computer.name }}"></iframe>{% endif %}
     </div>
     {% endfor %}
+    {% if total == 1 %}
+    <div class="stall spare">
+      {% if create %}<a class="invite" href="/computers" target="_top">{% include "computers/icons/plus.svg" %}{{ t.text("computers.stalls.another") }}</a>{% endif %}
+    </div>
+    {% endif %}
   </div>
   {% else %}
   <p class="empty">{{ t.text("computers.none") }}</p>

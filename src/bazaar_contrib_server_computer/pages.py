@@ -335,6 +335,7 @@ class Views:
             ),
             state=await self.listed(request.state.account, {}),
             goods=self._calls.goods,
+            create=request.state.account.allows(CREATE),
         )
 
     async def counted(

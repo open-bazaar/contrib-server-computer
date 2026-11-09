@@ -128,3 +128,21 @@ async def test_a_stall_shows_what_another_module_puts_in_it_under_its_name():
             await expect(goods.locator("#goods")).to_have_text(ref)
         finally:
             await browser.close()
+
+
+async def test_a_computer_alone_has_an_empty_stall_inviting_another():
+    async with serving() as served, client() as boss, async_playwright() as driver:
+        await admin(served, boss)
+        await enrol(served, boss, "kana-vm")
+        browser = await driver.chromium.launch()
+        try:
+            context = await browser.new_context(locale="zh-CN")
+            page = await signed_in(await context.new_page(), served, boss.cookies.jar)
+            await page.goto(f"{served.url}/overview")
+            stalls = page.frame_locator("iframe.frame").frame_locator(
+                "iframe[src='/ui/computers/stall']"
+            )
+            await stalls.locator(".stall.spare a").click()
+            await page.wait_for_url(re.compile(r"/computers$"))
+        finally:
+            await browser.close()

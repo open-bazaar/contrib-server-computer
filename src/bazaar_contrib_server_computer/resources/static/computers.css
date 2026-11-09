@@ -153,6 +153,11 @@
 .stall-hd .meta { color: var(--muted); font-size: 12px; }
 .stall-hd .right { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .stall-hd .online.off { font-weight: 500; }
+/* an empty stall beside a computer alone, on a wide screen: the shape of one
+   in a dashed line, unfilled, and a line inviting another */
+.stall.spare { border: 1px dashed var(--line-strong); border-radius: var(--r-lg); }
+.stall.spare .invite { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; color: var(--muted); font-size: 13px; text-decoration: none; }
+.stall.spare .invite svg { width: 14px; height: 14px; }
 
 /* narrow screens: a card a computer, drawers as whole pages, sheets from below */
 :root[data-layout="narrow"] .content { padding: 16px; }
@@ -188,3 +193,4 @@
 :root[data-layout="narrow"] .meter > small { grid-column: 1 / -1; }
 :root[data-layout="narrow"] .dstep .code { white-space: pre-wrap; word-break: break-all; }
 :root[data-layout="narrow"] .stalls { grid-template-columns: minmax(0, 1fr); }
+:root[data-layout="narrow"] .stall.spare { display: none; }
