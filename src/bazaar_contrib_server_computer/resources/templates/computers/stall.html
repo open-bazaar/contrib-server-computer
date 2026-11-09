@@ -11,9 +11,9 @@
   {% if rows %}
   <div class="stalls">
     {% for row in rows %}
-    <div class="card stall stall-{{ row.computer.name | tint }}{% if not row.online %} away{% endif %}">
+    <div class="card stall{% if not row.online %} away{% endif %}" style="--hue: {{ row.computer.name | hue }}">
       <a class="stall-top" href="/computers" target="_top">
-        {{ m.awning(ref(row.computer.id)) }}
+        {{ m.awning() }}
         <div class="stall-hd">{{ m.os(row.host) }}<div><div class="name">{{ row.computer.name }}</div><div class="meta">{% if row.host %}{{ row.host.name }} · {{ row.host.version }}{% else %}—{% endif %}</div></div><div class="right"><span class="online{% if not row.online %} off{% endif %}">{% if row.online %}{{ t.text("computers.online") }}{% elif row.seen_ms %}{{ t.text("computers.away_for", {"lasting": row.seen_ms | lasting}) }}{% else %}{{ t.text("computers.offline") }}{% endif %}</span></div></div>
       </a>
       {% if goods %}<iframe class="goods" src="{{ goods }}/{{ ref(row.computer.id) }}" data-fit title="{{ row.computer.name }}"></iframe>{% endif %}
