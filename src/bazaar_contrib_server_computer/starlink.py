@@ -1,16 +1,23 @@
 """Where a computer's starlink connects: it listens for the calls waiting for
 it, announces their results and reports its audit events, each request on
-its own and with the computer's token."""
+its own and with the computer's token; one that stops coming is said to
+have left once it has been away as long as one counts as online."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 lazy import asyncio
 lazy from collections.abc import Awaitable, Callable, Sequence
-lazy from time import time_ns
 lazy from typing import Annotated, Self
 
 lazy from bazaar_contrib_audit import AuditEvent
 lazy from bazaar_contrib_sidecar.wire import Failure, Result
+lazy from bazaar_contrib_timer import (
+    Timer,
+    TimerCancelledError,
+    TimerClosedError,
+    TimerHandle,
+)
 lazy from pydantic import (
     BaseModel,
     Field,
@@ -21,7 +28,7 @@ lazy from pydantic import (
 lazy from starlette.requests import Request
 lazy from starlette.responses import JSONResponse, Response
 
-from .contracts import Call, Relay, Reported
+from .contracts import Call, ComputerLeft, Relay, Reported
 lazy from .hosts import Hosts
 lazy from .store import Computer, Store
 
@@ -54,6 +61,15 @@ class _Report(BaseModel):
         return self
 
 
+@dataclass(slots=True)
+class _Watched:
+    """The check on whether a computer left, and when the relay noted it as
+    it last showed up here."""
+
+    handle: TimerHandle
+    seen_ms: int
+
+
 async def _body(request: Request) -> bytes | None:
     """What the request carries, nothing when it is more than one may."""
     body = b""
@@ -70,12 +86,20 @@ class Starlink:
         store: Store,
         relay: Relay,
         hosts: Hosts,
+        timer: Timer,
+        tasks: asyncio.TaskGroup,
         announce: Callable[[Reported], Awaitable[None]],
+        left: Callable[[ComputerLeft], Awaitable[None]],
     ) -> None:
         self._store = store
         self._relay = relay
         self._hosts = hosts
+        self._timer = timer
+        self._tasks = tasks
         self._announce = announce
+        self._left = left
+        # the check on each computer that showed up here, put off as it does again
+        self._watched: dict[str, _Watched] = {}
         # the run each computer last reported from, and how far it is confirmed
         self._runs: dict[str, tuple[str, int]] = {}
         # the listens held now, let go when the server stops
@@ -93,10 +117,42 @@ class Starlink:
         )
         if computer is None:
             return None
-        before = await self._relay.seen(computer.id)
-        if before is None or time_ns() // 1_000_000 - before > ONLINE_MS:
+        before, now = await self._relay.seen(computer.id)
+        if before is None or now - before > ONLINE_MS:
             self._hosts.ask(computer.id)
+        self._watch(computer.id, now)
         return computer
+
+    def _watch(self, computer_id: str, seen_ms: int) -> None:
+        """Put the check on whether the computer left off until it has been
+        away ONLINE_MS from now."""
+        if self._stopping:
+            return
+        watched = self._watched.get(computer_id)
+        if watched is not None and watched.handle.active:
+            # the relay's times only move on, whichever answer comes back first
+            watched.seen_ms = max(watched.seen_ms, seen_ms)
+            watched.handle.reset(ONLINE_MS)
+            return
+        watched = self._watched[computer_id] = _Watched(
+            self._timer.create(ONLINE_MS), seen_ms
+        )
+        self._tasks.create_task(self._check(computer_id, watched))
+
+    async def _check(self, computer_id: str, watched: _Watched) -> None:
+        """The computer left when the relay has not seen it since it was last
+        here: on any replica it showed up at later, the relay would have
+        noted another time."""
+        try:
+            await watched.handle.wait()
+        except TimerCancelledError, TimerClosedError:
+            return
+        finally:
+            if self._watched.get(computer_id) is watched:
+                del self._watched[computer_id]
+        seen = (await self._relay.last_seen([computer_id])).get(computer_id)
+        if seen == watched.seen_ms:
+            await self._left(ComputerLeft(computer_id, watched.seen_ms))
 
     async def listen(self, request: Request) -> Response:
         computer = await self._computer(request)
@@ -168,8 +224,11 @@ class Starlink:
         return JSONResponse({"run_id": report.run_id, "sequence": confirmed})
 
     def stop(self) -> None:
-        """Let the held listens go with nothing: the server is going down."""
+        """Let the held listens go with nothing, and drop the checks not yet
+        due: the server is going down."""
         self._stopping = True
         loop = asyncio.get_running_loop()
         for scope in self._held:
             scope.reschedule(loop.time())
+        for watched in self._watched.values():
+            watched.handle.cancel()

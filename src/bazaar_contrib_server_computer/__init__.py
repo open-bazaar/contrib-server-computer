@@ -1,6 +1,7 @@
 """The computers of the Bazaar Compute server: enrolling them, where their
-starlink connects, calling what they expose, and their pages; and the relay
-between the server's replicas, kept in memory for a server with one."""
+starlink connects, calling what they expose, telling when one left, and
+their pages; and the relay between the server's replicas, kept in memory
+for a server with one."""
 
 from __future__ import annotations
 
@@ -22,12 +23,14 @@ from bazaar_core import Context, Contrib
 from .contracts import (
     ANSWER_MS,
     CALLS_AT_MOST,
+    COMPUTER_LEFT,
     COMPUTER_REMOVED,
     COMPUTERS,
     HOLD_MS,
     RELAY,
     REPORTED,
     Call,
+    ComputerLeft,
     ComputerRemoved,
     Computers,
     ComputerSummary,
@@ -46,11 +49,13 @@ __all__ = [
     "ANSWER_MS",
     "CALLS_AT_MOST",
     "COMPUTERS",
+    "COMPUTER_LEFT",
     "COMPUTER_REMOVED",
     "HOLD_MS",
     "RELAY",
     "REPORTED",
     "Call",
+    "ComputerLeft",
     "ComputerRemoved",
     "ComputerSummary",
     "Computers",
@@ -80,7 +85,13 @@ async def _computer(ctx: Context) -> AsyncIterator[None]:
         calls = Calls(relay, store)
         hosts = Hosts(calls, tasks)
         starlink = Starlink(
-            store, relay, hosts, lambda reported: ctx.announce(REPORTED, reported)
+            store,
+            relay,
+            hosts,
+            ctx.accept(TIMER),
+            tasks,
+            lambda reported: ctx.announce(REPORTED, reported),
+            lambda left: ctx.announce(COMPUTER_LEFT, left),
         )
         pages = await server.pages("computers", __name__)
         views = Views(
@@ -90,6 +101,7 @@ async def _computer(ctx: Context) -> AsyncIterator[None]:
             store,
             relay,
             hosts,
+            calls,
             lambda computer_id: ctx.announce(
                 COMPUTER_REMOVED, ComputerRemoved(computer_id)
             ),
@@ -155,7 +167,10 @@ async def _computer(ctx: Context) -> AsyncIterator[None]:
                     title="computers.stalls",
                     src="/ui/computers/stall",
                     permission=VIEW,
+                    # after the usage, two rows tall
+                    order=20,
                     columns=2,
+                    rows=2,
                 )
             ),
             http.route("/starlink/v1/listen", starlink.listen, methods=["GET"]),
@@ -196,6 +211,7 @@ computer = Contrib(
         SERVER_DB,
         SERVER_SCHEMA,
         SERVER_MIGRATIONS,
+        TIMER,
     ],
     offers=[COMPUTERS],
     lifespan=_computer,

@@ -1,9 +1,11 @@
 """COMPUTERS: calling what a computer exposes, through the relay to wherever
-it listens."""
+it listens, the computers as other modules see them, and what another
+module shows in their stalls."""
 
 from __future__ import annotations
 
-lazy from collections.abc import Sequence
+from contextlib import asynccontextmanager
+lazy from collections.abc import AsyncIterator, Sequence
 lazy from time import time_ns
 
 lazy from bazaar_contrib_sidecar import RemoteError
@@ -20,6 +22,8 @@ class Calls:
     def __init__(self, relay: Relay, store: Store) -> None:
         self._relay = relay
         self._store = store
+        # where the goods each stall shows under its name are, while registered
+        self.goods: str | None = None
 
     async def call(
         self,
@@ -55,3 +59,11 @@ class Calls:
             )
             for computer_id, name in sorted(names.items())
         ]
+
+    @asynccontextmanager
+    async def stall(self, src: str) -> AsyncIterator[None]:
+        self.goods = src
+        try:
+            yield
+        finally:
+            self.goods = None

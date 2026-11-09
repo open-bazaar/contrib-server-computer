@@ -107,3 +107,24 @@ async def test_a_computer_is_shared_and_removed_from_its_row():
             await expect(frame.locator(".phone-line")).to_contain_text("Offline")
         finally:
             await browser.close()
+
+
+async def test_a_stall_shows_what_another_module_puts_in_it_under_its_name():
+    async with serving() as served, client() as boss, async_playwright() as driver:
+        await admin(served, boss)
+        ref, _ = await enrol(served, boss, "kana-vm")
+        browser = await driver.chromium.launch()
+        try:
+            context = await browser.new_context(locale="zh-CN")
+            page = await signed_in(await context.new_page(), served, boss.cookies.jar)
+            await page.goto(f"{served.url}/overview")
+            stalls = page.frame_locator("iframe.frame").frame_locator(
+                "iframe[src='/ui/computers/stall']"
+            )
+            stall = stalls.locator(".stall", has_text="kana-vm")
+            await expect(stall.locator(".stall-hd .name")).to_have_text("kana-vm")
+            # the probe's page for this computer, by the ref it was given
+            goods = stall.frame_locator("iframe.goods")
+            await expect(goods.locator("#goods")).to_have_text(ref)
+        finally:
+            await browser.close()

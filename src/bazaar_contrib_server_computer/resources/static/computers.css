@@ -130,12 +130,15 @@
 .confirm form svg { width: 14px; height: 14px; }
 .btn.red { background: var(--crimson); color: #fff; border-color: transparent; }
 
-/* the overview's stalls: a section of its own, two cards a row, each under its awning */
+/* the overview's stalls: a section of its own, two cards a row, each under
+   its awning, what another module shows filling it under its name */
 .stalls-page body { background: transparent; }
 .stalls-page .section-title .more { color: var(--muted); text-decoration: none; }
 .stalls-page .section-title .more svg { width: 14px; height: 14px; }
 .stalls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.stall { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 0; color: inherit; text-decoration: none; }
+.stall { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.stall-top { color: inherit; text-decoration: none; }
+.stall .goods { display: block; width: 100%; border: 0; }
 /* the awning as the street's: stripes of the stall's hue and cream under its pole */
 .stall { --awning-alt: light-dark(#efdfc0, #d9cbb0); --awning-pole: light-dark(#b98b5b, #3b3045); }
 .awning { display: block; }

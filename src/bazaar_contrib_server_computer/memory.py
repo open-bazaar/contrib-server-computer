@@ -102,10 +102,10 @@ class MemoryRelay:
         if asked is not None and not asked.answer.done():
             asked.answer.set_result(response)
 
-    async def seen(self, computer_id: str) -> int | None:
+    async def seen(self, computer_id: str) -> tuple[int | None, int]:
         before = self._seen.get(computer_id)
-        self._seen[computer_id] = time_ns() // 1_000_000
-        return before
+        now = self._seen[computer_id] = time_ns() // 1_000_000
+        return before, now
 
     async def last_seen(self, computer_ids: Sequence[str]) -> dict[str, int]:
         return {

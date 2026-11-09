@@ -19,6 +19,7 @@ lazy from starlette.requests import Request
 lazy from starlette.responses import Response
 lazy from starlette.routing import Route
 
+lazy from .calls import Calls
 lazy from .contracts import Relay
 lazy from .hosts import Host, Hosts
 lazy from .starlink import is_online
@@ -103,6 +104,7 @@ class Views:
         store: Store,
         relay: Relay,
         hosts: Hosts,
+        calls: Calls,
         removed: Callable[[str], Awaitable[None]],
     ) -> None:
         self._server = server
@@ -111,6 +113,7 @@ class Views:
         self._store = store
         self._relay = relay
         self._hosts = hosts
+        self._calls = calls
         self._removed = removed
         pages.environment.filters |= {
             "size": size,
@@ -314,7 +317,8 @@ class Views:
         return Response(status_code=204, headers={"HX-Trigger": "computers:removed"})
 
     async def _stall(self, request: Request) -> Response:
-        """The overview's stalls: one a computer, and how many are away."""
+        """The overview's stalls: one a computer, with what another module
+        shows in it, and how many are away."""
         visible = await self._visible(request)
         computers, more = await self._store.page(visible)
         ids = list(await self._store.names(visible))
@@ -330,6 +334,7 @@ class Views:
                 1 for computer_id in ids if not is_online(seen.get(computer_id), now)
             ),
             state=await self.listed(request.state.account, {}),
+            goods=self._calls.goods,
         )
 
     async def counted(

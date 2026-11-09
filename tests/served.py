@@ -1,6 +1,7 @@
 """The server's entries as installed, server-computer among them, with the
 door as a way in for people other than the admin, and a module that calls
-the computers and hears what they report."""
+the computers, hears what they report and when they leave, and shows a
+computer's ref in its stall."""
 
 from __future__ import annotations
 
@@ -25,13 +26,15 @@ from bazaar_core import Context, Contrib, ContribEntry, ContribHub, ContribSpec,
 from door import Door
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
+from starlette.responses import HTMLResponse, JSONResponse, Response
 from starlette.routing import Route
 
 from bazaar_contrib_server_computer import (
+    COMPUTER_LEFT,
     COMPUTER_REMOVED,
     COMPUTERS,
     REPORTED,
+    ComputerLeft,
     ComputerRemoved,
     Reported,
 )
@@ -61,6 +64,8 @@ class Served:
     reported: list[Reported] = field(default_factory=list)
     # the computers removed, as it was announced
     removed: list[ComputerRemoved] = field(default_factory=list)
+    # the computers said to have left, as it was announced
+    left: list[ComputerLeft] = field(default_factory=list)
 
 
 @asynccontextmanager
@@ -68,6 +73,7 @@ async def serving() -> AsyncIterator[Served]:
     found: dict[str, Any] = {}
     reported: list[Reported] = []
     removed: list[ComputerRemoved] = []
+    left: list[ComputerLeft] = []
     printed: list[str] = []
 
     class Printed(logging.Handler):
@@ -124,6 +130,14 @@ async def serving() -> AsyncIterator[Served]:
                 return JSONResponse({"failed": error.type}, status_code=502)
             return JSONResponse({"value": value})
 
+        async def goods(request: Request) -> Response:
+            # what the stall shows under a computer's name: the ref it was given
+            return HTMLResponse(
+                '<!DOCTYPE html><html><head><script src="/static/server/embed.js">'
+                f'</script></head><body><p id="goods">{request.path_params["ref"]}'
+                "</p></body></html>"
+            )
+
         async def listing(request: Request) -> Response:
             ids = request.query_params.getlist("id")
             return JSONResponse(
@@ -133,14 +147,18 @@ async def serving() -> AsyncIterator[Served]:
                 ]
             )
 
-        async with server.module(
-            "probe",
-            ui=Starlette(
-                routes=[
-                    Route("/computers", listing),
-                    Route("/{ref}/{method}", ask, methods=["POST"]),
-                ]
+        async with (
+            server.module(
+                "probe",
+                ui=Starlette(
+                    routes=[
+                        Route("/computers", listing),
+                        Route("/stall/{ref}", goods),
+                        Route("/{ref}/{method}", ask, methods=["POST"]),
+                    ]
+                ),
             ),
+            computers.stall("/ui/probe/stall"),
         ):
             yield
 
@@ -151,6 +169,10 @@ async def serving() -> AsyncIterator[Served]:
     async def gone(ctx: Context, value: ComputerRemoved) -> None:
         del ctx
         removed.append(value)
+
+    async def away(ctx: Context, value: ComputerLeft) -> None:
+        del ctx
+        left.append(value)
 
     composition = await asyncio.to_thread(
         load,
@@ -171,7 +193,11 @@ async def serving() -> AsyncIterator[Served]:
                     definition=Contrib(
                         accepts=[SERVER, COMPUTERS],
                         lifespan=probe,
-                        listen={REPORTED: heard, COMPUTER_REMOVED: gone},
+                        listen={
+                            REPORTED: heard,
+                            COMPUTER_REMOVED: gone,
+                            COMPUTER_LEFT: away,
+                        },
                     ),
                 ),
                 ContribEntry(
@@ -193,7 +219,9 @@ async def serving() -> AsyncIterator[Served]:
                 ),
                 "",
             )
-            yield Served(hub, found["url"], password, found["door"], reported, removed)
+            yield Served(
+                hub, found["url"], password, found["door"], reported, removed, left
+            )
     finally:
         logger.removeHandler(handler)
 
