@@ -170,7 +170,7 @@ requires-dist = [
     { name = "bazaar-contrib-server", specifier = "~=0.3.0rc3" },
     { name = "bazaar-contrib-server-access", specifier = "~=0.3.0rc4" },
     { name = "bazaar-contrib-server-database", specifier = "~=0.3.0rc1" },
-    { name = "bazaar-contrib-server-migrations", specifier = "~=0.3.0rc2" },
+    { name = "bazaar-contrib-server-migrations", specifier = "~=0.3.0rc3" },
     { name = "bazaar-contrib-server-overview", specifier = "~=0.3.0rc3" },
     { name = "bazaar-contrib-sidecar", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-storage", specifier = "~=0.3.0rc1" },
@@ -212,7 +212,7 @@ wheels = [
 
 [[package]]
 name = "bazaar-contrib-server-migrations"
-version = "0.3.0rc2"
+version = "0.3.0rc3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bazaar-contrib-schema" },
@@ -220,9 +220,9 @@ dependencies = [
     { name = "bazaar-contrib-storage" },
     { name = "bazaar-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ee/b6/29032aef0d71a63a59afdf0230958c0931bbaf9cd33e96d46cf6e2bf3305/bazaar_contrib_server_migrations-0.3.0rc2.tar.gz", hash = "sha256:15b9832be1d3c2b1da44d75ffd94829c88c9f493fab5bfee6e79e74ebaf978a2", size = 8282, upload-time = "2026-11-05T08:52:35.356Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cf/63/e80b016ed37d8a09b70a64c58fc1cdd2c2e7860db741b0082988eb1bb8f9/bazaar_contrib_server_migrations-0.3.0rc3.tar.gz", hash = "sha256:438cab171c50f19bef26506e3789af59eb6557b4d3beb5b4aa99d9d47799a5dd", size = 8998, upload-time = "2026-11-09T14:34:38.984Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/05/5b52552ed24a672222716ef3456869fe909469e6dc74f3ee904493c0c848/bazaar_contrib_server_migrations-0.3.0rc2-py3-none-any.whl", hash = "sha256:151909510e4413b5a878d8bc823a5fdbe4815277fbf57be0cc6ee90d71328897", size = 10493, upload-time = "2026-11-05T08:52:34.476Z" },
+    { url = "https://files.pythonhosted.org/packages/28/d5/1ec631b935bc72b7b3c95fd9fbd80ccea56fa49c1a1f133bde1d11a4a295/bazaar_contrib_server_migrations-0.3.0rc3-py3-none-any.whl", hash = "sha256:757d252c037f3608cb49694b26bf3a61677f03c730fb865844d89f14f649a497", size = 11311, upload-time = "2026-11-09T14:34:38.093Z" },
 ]
 
 [[package]]

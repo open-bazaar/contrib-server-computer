@@ -195,12 +195,6 @@ class Store:
 
         async def remove(session: Session) -> bool:
             await self._access.forget(session, "computer", computer_id)
-            # 0.2's events still point at their computer until the module
-            # taking them over holds them by id alone
-            if await session.table_exists("events"):
-                await session.delete(
-                    Delete(table="events", where=_equals("computer_id", computer_id))
-                )
             removed = await session.delete(
                 Delete(table="computers", where=_equals("id", computer_id))
             )
