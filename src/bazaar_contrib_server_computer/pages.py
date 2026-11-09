@@ -95,6 +95,13 @@ def lasting(context: Context, since_ms: int) -> str:
     return context["t"].text(key, {"n": n})
 
 
+def hue(name: str) -> int:
+    """The hue a computer's stall keeps by its name, as 0.2 coloured a name's
+    identicon."""
+    digest = hashlib.blake2b(name.encode("utf-8"), digest_size=8).digest()
+    return int.from_bytes(digest[:2], "big") % 360
+
+
 class Views:
     def __init__(
         self,
@@ -119,6 +126,7 @@ class Views:
             "size": size,
             "uptime": uptime,
             "lasting": lasting,
+            "hue": hue,
         }
         self.routes = [
             Route("/", self._list),
@@ -335,6 +343,7 @@ class Views:
             ),
             state=await self.listed(request.state.account, {}),
             goods=self._calls.goods,
+            create=request.state.account.allows(CREATE),
         )
 
     async def counted(

@@ -59,6 +59,7 @@
 "computers.rename.empty" = "A name cannot be empty."
 "computers.stalls.counted" = "{{ total }} computers · {{ away }} offline"
 "computers.stalls.total" = "{{ total }} computers"
+"computers.stalls.another" = "Connect another computer"
 "computers.away_for" = "Offline for {{ lasting }}"
 "computers.lasting.minutes" = "{{ n }} min"
 "computers.lasting.hours" = "{{ n }} h"

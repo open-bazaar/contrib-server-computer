@@ -139,13 +139,18 @@
 .stall { position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 .stall-top { color: inherit; text-decoration: none; }
 .stall .goods { display: block; width: 100%; border: 0; }
-/* the awning as the street's: stripes of the stall's hue and cream under its pole */
-.stall { --awning-alt: light-dark(#efdfc0, #d9cbb0); --awning-pole: light-dark(#b98b5b, #3b3045); }
+/* the awning as the street's, in its colours: stripes in the hue the computer's
+   name gives, as light and as vivid as the street's by day and by night (by
+   day, yellows lighter, as its saffron is), with its light stripe, wood and shade */
+.stall { --stripe: light-dark(oklch(calc(.6 + .14 * max(0, cos((var(--hue) - 90) * 1deg))) .15 var(--hue)), oklch(.74 .14 var(--hue))); }
 .awning { display: block; }
+.awning .hue { fill: var(--stripe); }
+.awning .alt { fill: var(--scene-alt); }
+.awning .band { fill: color-mix(in srgb, var(--stripe) 70%, #000); opacity: .55; }
+.awning .hue-fold { fill: color-mix(in srgb, var(--stripe) 70%, #000); }
+.awning .alt-fold { fill: color-mix(in srgb, var(--scene-alt) 78%, #000); }
+.awning .pole { fill: var(--scene-wood); }
 .stall.away .awning { filter: grayscale(1) brightness(.7); }
-/* the hue a name keeps, as its avatar's */
-.stall-h1 { --stripe: #f5a83a; } .stall-h2 { --stripe: #2fb996; } .stall-h3 { --stripe: #8f9dff; }
-.stall-h4 { --stripe: #ef7a5c; } .stall-h5 { --stripe: #b784f5; } .stall-h6 { --stripe: #9fb0c3; }
 .stall-hd { display: flex; align-items: center; gap: 10px; padding: 16px 16px 18px; }
 .stall-hd .os { width: 26px; height: 26px; border-radius: 7px; border-color: var(--line-soft); }
 .stall-hd .os svg { width: 15px; height: 15px; }
@@ -153,6 +158,11 @@
 .stall-hd .meta { color: var(--muted); font-size: 12px; }
 .stall-hd .right { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .stall-hd .online.off { font-weight: 500; }
+/* an empty stall beside a computer alone, on a wide screen: the shape of one
+   in a dashed line, unfilled, and a line inviting another */
+.stall.spare { border: 1px dashed var(--line-strong); border-radius: var(--r-lg); }
+.stall.spare .invite { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; color: var(--muted); font-size: 13px; text-decoration: none; }
+.stall.spare .invite svg { width: 14px; height: 14px; }
 
 /* narrow screens: a card a computer, drawers as whole pages, sheets from below */
 :root[data-layout="narrow"] .content { padding: 16px; }
@@ -188,3 +198,4 @@
 :root[data-layout="narrow"] .meter > small { grid-column: 1 / -1; }
 :root[data-layout="narrow"] .dstep .code { white-space: pre-wrap; word-break: break-all; }
 :root[data-layout="narrow"] .stalls { grid-template-columns: minmax(0, 1fr); }
+:root[data-layout="narrow"] .stall.spare { display: none; }

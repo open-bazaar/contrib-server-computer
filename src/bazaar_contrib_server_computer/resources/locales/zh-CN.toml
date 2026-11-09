@@ -59,6 +59,7 @@
 "computers.rename.empty" = "名称不能为空。"
 "computers.stalls.counted" = "{{ total }} 台电脑 · {{ away }} 台离线"
 "computers.stalls.total" = "{{ total }} 台电脑"
+"computers.stalls.another" = "再接入一台电脑"
 "computers.away_for" = "离线 {{ lasting }}"
 "computers.lasting.minutes" = "{{ n }} 分钟"
 "computers.lasting.hours" = "{{ n }} 小时"
