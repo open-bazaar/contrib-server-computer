@@ -72,10 +72,10 @@ class Hosts:
                 time_ns() // 1_000_000,
                 Host.model_validate(value),
             )
-        except RemoteError, TimeoutError, ValidationError:
+        except (RemoteError, TimeoutError, ValidationError) as error:
             # a node that does not answer, or answers otherwise, keeps what
             # was said before
-            logging.getLogger(__name__).info("computer.info.unanswered", exc_info=True)
+            logging.getLogger(__name__).info("computer.info.unanswered: %r", error)
         finally:
             del self._asking[computer_id]
 
