@@ -25,7 +25,7 @@ lazy from pydantic import (
     ValidationError,
     model_validator,
 )
-lazy from starlette.requests import Request
+lazy from starlette.requests import ClientDisconnect, Request
 lazy from starlette.responses import JSONResponse, Response
 
 from .contracts import Call, ComputerLeft, Relay, Reported
@@ -71,12 +71,16 @@ class _Watched:
 
 
 async def _body(request: Request) -> bytes | None:
-    """What the request carries, nothing when it is more than one may."""
+    """What the request carries; nothing when it is more than one may, or
+    the computer hung up before sending all of it."""
     body = b""
-    async for chunk in request.stream():
-        body += chunk
-        if len(body) > MAX_BODY_BYTES:
-            return None
+    try:
+        async for chunk in request.stream():
+            body += chunk
+            if len(body) > MAX_BODY_BYTES:
+                return None
+    except ClientDisconnect:
+        return None
     return body
 
 
