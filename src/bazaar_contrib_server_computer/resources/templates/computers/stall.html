@@ -1,22 +1,22 @@
 {% extends "server/base.html" %}
 {% import "computers/macros.html" as m %}
-{# the overview's stalls: a section of its own, a card a computer under its awning, with what another module shows in it under its name; a computer alone has an empty stall beside it, inviting another #}
+{# the overview's stalls: a section of its own, a card a computer under its awning, with what another module shows in it under its name; a computer alone has an empty stall beside it, inviting another; drawn again in place, what the other module shows kept as it is #}
 {% block root %} class="stalls-page"{% endblock %}
 {% block top %}{% endblock %}
 {% block title %}{{ t.text("computers.stalls") }}{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ asset('computers.css') }}">{% endblock %}
 {% block body %}
-<section id="stalls" data-topic="computers.list" data-seen='{{ state | tojson }}' hx-get="/ui/computers/stall" hx-trigger="bazaar:change" hx-select="#stalls" hx-target="#stalls" hx-swap="outerHTML">
+<section id="stalls" data-topic="computers.list" data-seen='{{ state | tojson }}' hx-get="/ui/computers/stall" hx-trigger="bazaar:change" hx-select="#stalls" hx-target="#stalls" hx-swap="outerMorph">
   <div class="section-title"><h2>{{ t.text("computers.stalls") }}</h2><span class="sub">{{ t.text("computers.stalls.counted", {"total": total, "away": away}) if away else t.text("computers.stalls.total", {"total": total}) }}</span><a class="more" href="/computers" target="_top">{{ t.text("computers.all") }}{% include "computers/icons/chevron-right.svg" %}</a></div>
   {% if rows %}
   <div class="stalls">
     {% for row in rows %}
-    <div class="card stall{% if not row.online %} away{% endif %}" style="--hue: {{ row.computer.name | hue }}">
+    <div class="card stall{% if not row.online %} away{% endif %}" id="stall-{{ ref(row.computer.id) }}" style="--hue: {{ row.computer.name | hue }}">
       <a class="stall-top" href="/computers" target="_top">
         {{ m.awning() }}
         <div class="stall-hd">{{ m.os(row.host) }}<div><div class="name">{{ row.computer.name }}</div><div class="meta">{% if row.host %}{{ row.host.name }} · {{ row.host.version }}{% else %}—{% endif %}</div></div><div class="right"><span class="online{% if not row.online %} off{% endif %}">{% if row.online %}{{ t.text("computers.online") }}{% elif row.seen_ms %}{{ t.text("computers.away_for", {"lasting": row.seen_ms | lasting}) }}{% else %}{{ t.text("computers.offline") }}{% endif %}</span></div></div>
       </a>
-      {% if goods %}<iframe class="goods" src="{{ goods }}/{{ ref(row.computer.id) }}" data-fit title="{{ row.computer.name }}"></iframe>{% endif %}
+      {% if goods %}<iframe class="goods" src="{{ goods }}/{{ ref(row.computer.id) }}" data-fit hx-morph-skip title="{{ row.computer.name }}"></iframe>{% endif %}
     </div>
     {% endfor %}
     {% if total == 1 %}
