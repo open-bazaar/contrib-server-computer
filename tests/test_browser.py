@@ -126,6 +126,17 @@ async def test_a_stall_shows_what_another_module_puts_in_it_under_its_name():
             # the probe's page for this computer, by the ref it was given
             goods = stall.frame_locator("iframe.goods")
             await expect(goods.locator("#goods")).to_have_text(ref)
+            # the stalls drawn again as a computer is renamed: what the probe
+            # shows stays as it was, not loaded again
+            shown = page.frame(url=re.compile(rf"/ui/probe/stall/{ref}$"))
+            assert shown
+            await shown.evaluate("() => { window.kept = true; }")
+            await boss.post(
+                f"{served.url}/ui/computers/{ref}/name", data={"name": "kana-pc"}
+            )
+            await expect(stalls.locator(".stall-hd .name")).to_have_text("kana-pc")
+            shown = page.frame(url=re.compile(rf"/ui/probe/stall/{ref}$"))
+            assert shown and await shown.evaluate("() => window.kept === true")
         finally:
             await browser.close()
 
