@@ -65,3 +65,4 @@
 "computers.lasting.minutes" = "{{ n }} min"
 "computers.lasting.hours" = "{{ n }} h"
 "computers.lasting.days" = "{{ n }} d"
+"computers.loading" = "Loading more"
