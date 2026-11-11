@@ -112,7 +112,7 @@
 .meter > svg { width: 16px; height: 16px; color: var(--muted); }
 .meter > span { font-size: 13px; color: var(--text-2); }
 .meter > b { justify-self: end; font: 600 12.5px var(--font-mono); color: var(--text); }
-.meter > small { grid-column: 3 / -1; font: 11.5px var(--font-mono); color: var(--muted); }
+.meter > small { grid-column: 3 / -1; font: 11.5px var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
 .cells.wide { display: flex; }
 .cells.wide i { flex: 1; height: 14px; }
 .note { margin: 0; padding: 14px 16px; border-radius: var(--r-md); border: 1px dashed var(--line-strong); color: var(--muted); font-size: 13px; }
