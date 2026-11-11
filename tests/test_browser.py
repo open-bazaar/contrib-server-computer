@@ -30,21 +30,32 @@ async def test_connecting_a_computer_shows_the_commands_and_then_the_computer():
         browser = await driver.chromium.launch()
         try:
             context = await browser.new_context(locale="zh-CN")
+            await context.grant_permissions(["clipboard-read"], origin=served.url)
             page = await signed_in(await context.new_page(), served, boss.cookies.jar)
             frame = page.frame_locator("iframe.frame")
             await frame.locator(".top .actions button").click()
             await frame.locator("input[name=name]").fill("kana-vm")
             await frame.locator(".dstep form button[type=submit]").click()
             commands = frame.locator(".code:visible")
-            # the address the page is seen at, and the token's middle hidden
+            # the address the page is seen at, and the whole token
             await expect(commands).to_contain_text(f"server={served.url}")
-            await expect(commands).to_contain_text("••••••••")
-            # what the button copies holds the whole token
             copied = await commands.get_attribute("data-text")
             token = re.search(r"--option token=(\S+)", copied or "")
             assert token is not None
-            assert "--option server=ORIGIN" in (copied or "")
+            await expect(commands).to_contain_text(f"token={token.group(1)}")
+            # the button puts the lines on the clipboard, with that address,
+            # and says so, the page served over plain http to an address on
+            # the network too, where the clipboard interface is not given
+            module = page.frame(url=re.compile(r"/ui/computers/"))
+            assert module
+            await module.evaluate(
+                "Object.defineProperty(navigator, 'clipboard', {value: undefined})"
+            )
             await commands.locator(".copy").click()
+            await expect(commands.locator(".copy")).to_contain_text("已复制")
+            clipboard = await page.evaluate("navigator.clipboard.readText()")
+            assert f"--option server={served.url}" in clipboard
+            assert f"--option token={token.group(1)}" in clipboard
             # the computer coming online takes the drawer to its detail
             async with node(served, token.group(1)) as computer:
                 await connected(computer)
