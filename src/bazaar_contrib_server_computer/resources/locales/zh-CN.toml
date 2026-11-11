@@ -32,6 +32,7 @@
 "computers.close" = "关闭"
 "computers.copy" = "复制"
 "computers.copied" = "已复制"
+"computers.copy.failed" = "没复制上，请手动选中复制"
 "computers.uptime" = "已运行"
 "computers.uptime.days" = "{{ days }} 天 {{ hours }} 小时"
 "computers.uptime.hours" = "{{ hours }} 小时 {{ minutes }} 分钟"

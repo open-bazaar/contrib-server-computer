@@ -81,7 +81,7 @@ wheels = [
 
 [[package]]
 name = "bazaar-contrib-server"
-version = "0.3.0rc3"
+version = "0.3.0rc12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bazaar-contrib-http" },
@@ -99,9 +99,9 @@ dependencies = [
     { name = "starlette" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/88/64/68e5a5a8b6ae9dcb625bda0f13e26b8b087bc61d2d6bd78ef9b96e20cae8/bazaar_contrib_server-0.3.0rc3.tar.gz", hash = "sha256:bfa3b98bc3e1d8c967fd5424825b214ed683dd8f87b679cfbaa454c3052ff3c0", size = 482453, upload-time = "2026-11-06T06:27:58.109Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/c9/5a35e7ebe05621e74c73f94f632c35388d2851099a0cd8d1538375f74e51/bazaar_contrib_server-0.3.0rc12.tar.gz", hash = "sha256:3dc022aad18eefc9c855661a5b69c843ff9d998bfb75fe2534bff93fc68b0e2c", size = 484560, upload-time = "2026-11-11T05:31:11.126Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/a2/b1ade57de57066ea1fa02380157eab8eb91ba6595867304568ca21bd2edf/bazaar_contrib_server-0.3.0rc3-py3-none-any.whl", hash = "sha256:57036eae3667dc7ae518bd60cfb0dada72271b227b8bd9fe6e61efa24cbb951a", size = 494556, upload-time = "2026-11-06T06:27:56.419Z" },
+    { url = "https://files.pythonhosted.org/packages/10/65/1f93cf3d0ede08cf88a460fe1df9b16bb1dffceba13ec02f2341af1d4b68/bazaar_contrib_server-0.3.0rc12-py3-none-any.whl", hash = "sha256:29ec913f0a360ee9b203c0e0321ece58280aafec80d1553d6b6b4ce4d3096521", size = 497023, upload-time = "2026-11-11T05:31:09.436Z" },
 ]
 
 [[package]]
@@ -167,7 +167,7 @@ requires-dist = [
     { name = "bazaar-contrib-audit", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-http", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-schema", specifier = "~=0.3.0rc1" },
-    { name = "bazaar-contrib-server", specifier = "~=0.3.0rc3" },
+    { name = "bazaar-contrib-server", specifier = "~=0.3.0rc12" },
     { name = "bazaar-contrib-server-access", specifier = "~=0.3.0rc4" },
     { name = "bazaar-contrib-server-database", specifier = "~=0.3.0rc1" },
     { name = "bazaar-contrib-server-migrations", specifier = "~=0.3.0rc3" },

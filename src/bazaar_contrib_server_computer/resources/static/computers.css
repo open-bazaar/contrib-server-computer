@@ -90,6 +90,8 @@
 .dstep .seg { margin-bottom: 10px; }
 .dstep .seg button { padding: 6px 12px; border: 0; border-radius: 7px; background: none; font: inherit; font-size: 13px; color: var(--muted); cursor: pointer; }
 .dstep .seg button.on { background: var(--raised); color: var(--text); box-shadow: var(--shadow); font-weight: 600; }
+/* the commands wrap, the token whole within the box, the button below them */
+.dstep .code { white-space: pre-wrap; word-break: break-all; padding-bottom: 46px; }
 .dstep .code .copy { top: auto; bottom: 8px; }
 .warn { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 12.5px; color: var(--saffron); }
 .warn svg { width: 14px; height: 14px; }
@@ -196,6 +198,5 @@
 :root[data-layout="narrow"] .meter > .cells { grid-column: 1 / -1; }
 :root[data-layout="narrow"] .facts b { white-space: normal; }
 :root[data-layout="narrow"] .meter > small { grid-column: 1 / -1; }
-:root[data-layout="narrow"] .dstep .code { white-space: pre-wrap; word-break: break-all; }
 :root[data-layout="narrow"] .stalls { grid-template-columns: minmax(0, 1fr); }
 :root[data-layout="narrow"] .stall.spare { display: none; }

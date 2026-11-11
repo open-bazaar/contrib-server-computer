@@ -9,9 +9,8 @@
         <span class="n">{% include "computers/icons/check.svg" %}</span>
         <div><h4>{{ t.text("computers.enrol.name") }}</h4><div class="input">{{ enrolled.name }}</div></div>
       </div>
-      {# the token is in the page this once: the lines shown hide its middle, what is copied is all of it, with the address this page is seen at #}
-      {% set masked = token[:8] ~ "••••••••" ~ token[-4:] %}
-      <div class="dstep now" x-data="{ windows: navigator.platform.startsWith('Win'), copied: false }">
+      {# the token is in the page this once, whole; what is copied is the lines with the address this page is seen at, and the button says whether they were #}
+      <div class="dstep now" x-data="{ windows: navigator.platform.startsWith('Win'), copied: null }">
         <span class="n">2</span>
         <div>
           <h4>{{ t.text("computers.enrol.run", {"name": enrolled.name}) }}</h4>
@@ -21,7 +20,7 @@
 <span class="p">$ </span>bcn contrib add bazaar-contrib-starlink {{ tail }}
     <span class="f">--enable</span> starlink {{ tail }}
     <span class="f">--option</span> server=<span x-text="location.origin"></span> {{ tail }}
-    <span class="f">--option</span> token={{ masked }}<button class="btn sm copy" type="button" @click="navigator.clipboard?.writeText($el.parentElement.dataset.text.replace('ORIGIN', location.origin)); copied = true">{% include "computers/icons/copy.svg" %}<span x-show="!copied">{{ t.text("computers.copy") }}</span><span x-show="copied" x-cloak>{{ t.text("computers.copied") }}</span></button></div>
+    <span class="f">--option</span> token={{ token }}<button class="btn sm copy" type="button" @click="copied = await bazaarCopy($el.parentElement.dataset.text.replace('ORIGIN', location.origin))">{% include "computers/icons/copy.svg" %}<span x-show="copied === null">{{ t.text("computers.copy") }}</span><span x-show="copied === true" x-cloak>{{ t.text("computers.copied") }}</span><span x-show="copied === false" x-cloak>{{ t.text("computers.copy.failed") }}</span></button></div>
           {% endfor %}
           <div class="warn">{% include "computers/icons/key-round.svg" %}{{ t.text("computers.enrol.once") }}</div>
         </div>
