@@ -40,6 +40,14 @@ jobs:
           uv run --no-sync ruff check .
       - name: Check types
         run: uv run --no-sync pyright
+      - name: Find the browser's version
+        id: browser
+        run: echo "playwright=$(uv run --no-sync python -c 'import importlib.metadata as m; print(m.version("playwright"))')" >> "$GITHUB_OUTPUT"
+      - name: Cache the browser
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/playwright
+          key: playwright-${{ runner.os }}-${{ steps.browser.outputs.playwright }}
       - name: Install the browser
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/playwright
