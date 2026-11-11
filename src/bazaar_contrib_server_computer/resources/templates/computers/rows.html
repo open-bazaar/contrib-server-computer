@@ -34,4 +34,4 @@
   </div>
 </div>
 {% endfor %}
-{% if more and rows %}<div class="more-rows" hx-get="/ui/computers/more?after={{ ref(rows[-1].computer.id) }}" hx-trigger="revealed" hx-swap="outerHTML"></div>{% endif %}
+{% if more and rows %}<div class="more-rows paging" hx-get="/ui/computers/more?after={{ ref(rows[-1].computer.id) }}" hx-trigger="revealed" hx-swap="outerHTML"><span class="spin"></span>{{ t.text("computers.loading") }}</div>{% endif %}

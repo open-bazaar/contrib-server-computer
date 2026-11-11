@@ -38,7 +38,6 @@
 .use.none { color: var(--faint); }
 .cell.mono { font-size: 12.5px; }
 .empty-list { padding: 36px 20px; display: grid; justify-items: center; gap: 12px; color: var(--muted); font-size: 13.5px; }
-.more-rows { height: 1px; }
 
 /* a row's actions: what the account may do with that computer */
 .acts { position: relative; display: grid; place-items: center; }

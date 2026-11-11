@@ -65,3 +65,4 @@
 "computers.lasting.minutes" = "{{ n }} 分钟"
 "computers.lasting.hours" = "{{ n }} 小时"
 "computers.lasting.days" = "{{ n }} 天"
+"computers.loading" = "正在加载更多"
