@@ -1,6 +1,6 @@
 [project]
 name = "bazaar-contrib-server-computer"
-version = "0.3.0rc11"
+version = "0.3.0rc12"
 description = "The computers of the Bazaar Compute server: enrolling them, where their starlink connects, calling them and their pages"
 readme = "README.md"
 license = "Apache-2.0"
