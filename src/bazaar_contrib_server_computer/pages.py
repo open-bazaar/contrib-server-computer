@@ -135,7 +135,7 @@ class Views:
             Route("/more", self._more),
             Route("/enrol", self._enrolling),
             Route("/stall", self._stall),
-            Route("/{ref}", self._detail),
+            Route("/{ref}", self._open),
             Route("/{ref}/name", self._rename, methods=["POST"]),
             Route("/{ref}/share", self._share),
             Route("/{ref}/remove", self._removing),
@@ -206,7 +206,9 @@ class Views:
             raise HTTPException(status_code=404)
         return (await self._shown(account, [computer]))[0]
 
-    async def _listing(self, request: Request, template: str) -> Response:
+    async def _listing(
+        self, request: Request, template: str, *, detail: Row | None = None
+    ) -> Response:
         account: Account = request.state.account
         visible = await self._visible(request)
         computers, more = await self._store.page(
@@ -218,6 +220,12 @@ class Views:
         return await self._pages.render(
             request,
             template,
+            detail=detail,
+            detail_state=await self.computer(
+                account, {"computer": str(self._server.refs.ref(detail.computer.id))}
+            )
+            if detail is not None
+            else None,
             rows=await self._shown(account, computers),
             more=more,
             total=len(ids),
@@ -280,6 +288,13 @@ class Views:
                 account, {"computer": str(self._server.refs.ref(computer.id))}
             ),
         )
+
+    async def _open(self, request: Request) -> Response:
+        """A direct link opens the list with its drawer; htmx asks for the drawer alone."""
+        if request.headers.get("HX-Request") == "true":
+            return await self._detail(request)
+        row = await self._one(request)
+        return await self._listing(request, "computers/list.html", detail=row)
 
     async def _detail(self, request: Request, *, invalid: bool = False) -> Response:
         row = await self._one(request)
