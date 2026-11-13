@@ -8,5 +8,5 @@
   {% include "computers/table.html" %}
 </section>
 {# what opens over the list: a drawer, a sheet or the question before removing #}
-<div id="drawer"></div>
+<div id="drawer">{% if detail %}{% with row=detail, editing=false, invalid=false, state=detail_state %}{% include "computers/detail.html" %}{% endwith %}{% endif %}</div>
 {% endblock %}

@@ -168,3 +168,33 @@ async def test_a_computer_alone_has_an_empty_stall_inviting_another():
             await page.wait_for_url(re.compile(r"/computers$"))
         finally:
             await browser.close()
+
+
+async def test_a_direct_computer_link_opens_a_styled_drawer_and_updates_the_address():
+    async with serving() as served, client() as boss, async_playwright() as driver:
+        await admin(served, boss)
+        ref, _ = await enrol(served, boss, "Build computer")
+        browser = await driver.chromium.launch()
+        try:
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 800}, locale="en-US"
+            )
+            page = await signed_in(await context.new_page(), served, boss.cookies.jar)
+            await page.goto(f"{served.url}/computers/{ref}")
+            frame = page.frame_locator("iframe.frame")
+            await expect(frame.locator("#detail-title")).to_have_text("Build computer")
+            await expect(frame.locator(".top")).to_be_visible()
+            await expect(frame.locator('link[href*="computers.css"]')).to_have_count(1)
+            drawer = await frame.locator(".drawer").bounding_box()
+            assert drawer is not None and 300 <= drawer["width"] <= 760
+            icon = await frame.locator(".d-hd .os svg").bounding_box()
+            assert icon is not None and icon["width"] <= 48 and icon["height"] <= 48
+            await page.wait_for_url(re.compile(rf"/computers/{ref}$"))
+            await frame.locator(".close").click()
+            await expect(frame.locator("#table")).to_be_visible()
+            # The list's existing htmx action still swaps just the drawer.
+            await frame.locator(f'[hx-get="/ui/computers/{ref}"]').first.click()
+            await expect(frame.locator("#detail-title")).to_have_text("Build computer")
+            await expect(frame.locator(".top")).to_have_count(1)
+        finally:
+            await browser.close()
